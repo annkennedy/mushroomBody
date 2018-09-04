@@ -41,6 +41,8 @@ KC.tmax     = PN.tmax;
 KC.tOn      = PN.tOn;
 KC.tOff     = PN.tOff;
 KC.taum     = 0.01;
+KC.tau_m    = 0.01;
+KC.tau_s    = 0.01;
 
 KC.wPNKC    = buildConnects(KC,PN, realonly);
 PN.wPNInh   = ones(1,PN.ncells);

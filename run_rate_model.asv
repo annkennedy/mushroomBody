@@ -35,11 +35,13 @@ spRan = 0.1;%0.05:0.05:0.2;
             %set up PN and KC models
             [PN, KC] = initialize_cells(ORN,realonly);
             % uniform wPNKC
-%             populated = ORN.HCList * PN.PN_per_glom;
-%             populated = sort([populated-4 populated-3 populated-2 populated-1 populated]);
-%             for i = 1:2000
-%                 KC.wPNKC(populated,i) = KC.wPNKC(populated(randperm(length(populated))),i);
-%             end            
+            populated = ORN.HCList * PN.PN_per_glom;
+            populated = sort([populated-4 populated-3 populated-2 populated-1 populated]);
+            for i = 1:2000
+                KC.wPNKC(populated,i) = KC.wPNKC(populated(randperm(length(populated))),i);
+            end
+            KC.tau_m    = 0.01;
+            KC.tau_s    = 0.01;
 
             %first, measure the amount of spontaneous input to KCs
             [~,PN_t,~]  = getPNdynamics(ORN,PN,LN,1);
@@ -50,22 +52,21 @@ spRan = 0.1;%0.05:0.05:0.2;
 
             %next, tune inhibition to set KC representation sparsity
             disp('Fitting APL inhibition (this step is slow)...');
-            clear PN_sample PN_RW_sample;
+            clear PN_t PN_RW;
             odorset = 2:3:110;     % code takes a while to run so I don't use all odors
 %             odorset = randperm(110,60);
             sp_target = spRan(sp); % target sparsity of model KC population
             for i = odorset
-                [~,PN_sample{i},~,PN_RW_sample{i}] = getPNdynamics(ORN,PN,LN,i);
+                [~,PN_t{i},~,PN_RW{i}] = getPNdynamics(ORN,PN,LN,i);
             end
 %             PN_t = PN_RW;
 %             if(use)
-%                 KC = setKCthreshold_bycell(PN,PN_sample, odorset, KC,sp_target*2);
-%                 KC = fitSparseness(PN,PN_sample,odorset,KC,sp_target);
+%                 KC = setKCthreshold_bycell(PN,PN_t, odorset, KC,sp_target*2);
+%                 KC = fitSparseness(PN,PN_t,odorset,KC,sp_target);
 %             else
                 KC.wInhKC = zeros(KC.ncells,1);
                 KC.wKCInh = zeros(1,KC.ncells);
-%                 KC = scalePNKCwts(PN, PN_sample, odorset, KC);
-                KC = setKCthreshold(PN,PN_sample,odorset,KC,sp_target);
+                KC = setKCthreshold(PN,PN_t,odorset,KC,sp_target);
 %             end
             disp('APL inhibition fit');
 
@@ -92,7 +93,7 @@ spRan = 0.1;%0.05:0.05:0.2;
                     disp([num2str(odorid) '. ' ORN.odornames{odorid} ': ' num2str(fr_active(odorid)*100) '%']);
                 end
             end
-            KCmeanStore_scalePNwts_noinh{sp,rep} = KCmean_st;
+            KCmeanStore_uniform_wPNKC_noinh{sp,rep} = KCmean_st;
 %             if(use)
 %                 KCmeanStore_inh{sp,rep} = KCmean_st;
 %             else
@@ -113,7 +114,7 @@ spRan = 0.1;%0.05:0.05:0.2;
 figure(1);clf;hold on;
 i=2;
 silentBars = [];
-silentCellBars = [];
+sile
 
 for use = {KCmeanStore_inh}
     vals = [];
@@ -122,7 +123,6 @@ for use = {KCmeanStore_inh}
         vals = [vals pdist(M,'hamming')];
     end
     silentBars(end+1) = sum(sum(M~=0)==0);
-    silentCellBars(end+1) = sum(sum(M'~=0)==0);
     h=plotCDFFit(vals);
 end
 set(h,'linewidth',2,'color','r');
@@ -130,35 +130,30 @@ set(h,'linewidth',2,'color','r');
 % normalize ORN responses
 M = KCmeanStore_normORNs{1,1};
 silentBars(end+1) = sum(sum(M~=0)==0);
-silentCellBars(end+1) = sum(sum(M'~=0)==0);
 vals = pdist(M,'hamming');
 plotCDFFit(vals);
 
 % shuffle ORN responses
 M = KCmeanStore_randORNs{1,1};
 silentBars(end+1) = sum(sum(M~=0)==0);
-silentCellBars(end+1) = sum(sum(M'~=0)==0);
 vals = pdist(M,'hamming');
 plotCDFFit(vals);
 
 % static PN model
 M = KCmeanStore_RW_PNs{1,1};
 silentBars(end+1) = sum(sum(M~=0)==0);
-silentCellBars(end+1) = sum(sum(M'~=0)==0);
 vals = pdist(M,'hamming');
 plotCDFFit(vals);
 
 % uniform MB innervation by PNs
 M = KCmeanStore_uniform_wPNKC{1,1};
 silentBars(end+1) = sum(sum(M~=0)==0);
-silentCellBars(end+1) = sum(sum(M'~=0)==0);
 vals = pdist(M,'hamming');
 plotCDFFit(vals);
 
 % finer-tuned KC thresholds, no inh
 M = KCmeanStore_fineThr{1,1};
 silentBars(end+1) = sum(sum(M~=0)==0);
-silentCellBars(end+1) = sum(sum(M'~=0)==0);
 vals = pdist(M,'hamming');
 plotCDFFit(vals);
 
@@ -169,7 +164,6 @@ for i=1:110
     M(:,i) = vals>s(round(2000*.9));
 end
 silentBars(end+1) = sum(sum(M~=0)==0);
-silentCellBars(end+1) = sum(sum(M'~=0)==0);
 vals = sort(pdist(M,'hamming'));
 h = plotCDFFit(vals);
 set(h,'linewidth',2,'color','k');
@@ -188,18 +182,11 @@ set(gca,'xtick',1:7,'xticklabels',{'simple thr','norm ORNs','rand ORNs',...
     'static PN model','uniform wPNKC','fine-tuned KC thresholds'},'xticklabelrotation',30);
 box off;
 
-figure(4);clf;
-bar(silentCellBars);
-set(gca,'xtick',1:7,'xticklabels',{'simple thr','norm ORNs','rand ORNs',...
-    'static PN model','uniform wPNKC','fine-tuned KC thresholds'},'xticklabelrotation',30);
-box off;
-
 %% effects on similarity, no inh
 
 figure(1);clf;hold on;
 i=2;
 silentBars = [];
-silentCellBars = [];
 
 for use = {KCmeanStore_none}
     vals = [];
@@ -208,7 +195,6 @@ for use = {KCmeanStore_none}
         vals = [vals pdist(M,'hamming')];
     end
     silentBars(end+1) = sum(sum(M~=0)==0);
-    silentCellBars(end+1) = sum(sum(M'~=0)==0);
     h=plotCDFFit(vals);
 end
 set(h,'linewidth',2,'color','r');
@@ -216,45 +202,32 @@ set(h,'linewidth',2,'color','r');
 % normalize ORN responses
 M = KCmeanStore_normORNs_noinh{1,1};
 silentBars(end+1) = sum(sum(M~=0)==0);
-silentCellBars(end+1) = sum(sum(M'~=0)==0);
 vals = pdist(M,'hamming');
 plotCDFFit(vals);
 
 % shuffle ORN responses
 M = KCmeanStore_randORNs_noinh{1,1};
 silentBars(end+1) = sum(sum(M~=0)==0);
-silentCellBars(end+1) = sum(sum(M'~=0)==0);
 vals = pdist(M,'hamming');
 plotCDFFit(vals);
 
 % static PN model
 M = KCmeanStore_RW_PNs_noinh{1,1};
 silentBars(end+1) = sum(sum(M~=0)==0);
-silentCellBars(end+1) = sum(sum(M'~=0)==0);
 vals = pdist(M,'hamming');
 plotCDFFit(vals);
 
 % uniform MB innervation by PNs
 M = KCmeanStore_uniform_wPNKC_noinh{1,1};
 silentBars(end+1) = sum(sum(M~=0)==0);
-silentCellBars(end+1) = sum(sum(M'~=0)==0);
 vals = pdist(M,'hamming');
 plotCDFFit(vals);
 
 % finer-tuned KC thresholds, no inh
 M = KCmeanStore_fineThr_noinh{1,1};
 silentBars(end+1) = sum(sum(M~=0)==0);
-silentCellBars(end+1) = sum(sum(M'~=0)==0);
 vals = pdist(M,'hamming');
 plotCDFFit(vals);
-
-% scale PN weights "presynaptically"
-M = KCmeanStore_scalePNwts_noinh{1,1};
-silentBars(end+1) = sum(sum(M~=0)==0);
-silentCellBars(end+1) = sum(sum(M'~=0)==0);
-vals = pdist(M,'hamming');
-h=plotCDFFit(vals);
-set(h,'linewidth',2);
 
 % 10% of cells for each odor
 for i=1:110
@@ -263,27 +236,23 @@ for i=1:110
     M(:,i) = vals>s(round(2000*.9));
 end
 silentBars(end+1) = sum(sum(M~=0)==0);
-silentCellBars(end+1) = sum(sum(M'~=0)==0);
 vals = sort(pdist(M,'hamming'));
 h = plotCDFFit(vals);
 set(h,'linewidth',2,'color','k');
 
-legstr = {'simple thr','norm ORNs','rand ORNs','static PN model','uniform wPNKC',...
-        'fine-tuned KC thresholds','presynaptic plasticity',...
-        'rand KCs'};
-legend(legstr{:},'location','best');
+
+legend('simple thr','norm ORNs','rand ORNs','static PN model','uniform wPNKC',...
+        'fine-tuned KC thresholds',...
+        'rand KCs','location','best');
 xlabel('normalized hamming distance');
 ylabel('fraction of odor pairs');
 xlim([0 .5]);
 
+%%
 figure(2);clf;
 bar(silentBars);
-set(gca,'xtick',1:7,'xticklabels',legstr,'xticklabelrotation',30);
-box off;
-
-figure(3);clf;
-bar(silentCellBars);
-set(gca,'xtick',1:7,'xticklabels',legstr,'xticklabelrotation',30);
+set(gca,'xtick',1:7,'xticklabels',{'simple thr','norm ORNs','rand ORNs',...
+    'static PN model','uniform wPNKC','fine-tuned KC thresholds'},'xticklabelrotation',30);
 box off;
 
 %% effects on similarity- looking at tuning KC thresholds

@@ -1,7 +1,7 @@
-function [ORN_t,PN_t,LNR] = getPNdynamics(ORN,PN,LN,stimodor)
+function [ORN_t,PN_t,LNR,PN_RW] = getPNdynamics(ORN,PN,LN,stimodor)
 
 dt      = PN.dt;
-time    = PN.tmin-1.5+dt:dt:PN.tmax; % we simulate for an extra bit at the beginning to get to steady state
+time    = PN.tmin-1+dt:dt:PN.tmax; % we simulate for an extra bit at the beginning to get to steady state
 stim    = (time>PN.tOn)&(time<PN.tOff);
 odor    = smoothts(ORN.spont*ones(size(stim)) + ORN.rates(:,stimodor)*stim,'e',.020/dt);   % odor input to ORNs
 
@@ -15,7 +15,7 @@ inhB    = 50*ones(size(stim));
 inh_PN = 0;
 inh_LN = 0;
 
-% PN_RW    = PN.spont * ones(size(time));
+PN_RW    = PN.spont * ones(size(time));
 % PN_inhKO = PN.spont*ones(size(time));
 
 for t = 2:length(time)
@@ -42,10 +42,10 @@ for t = 2:length(time)
     PN_t(:,t)   = PN_t(:,t-1) + dPNdt*dt/PN.taum;
     PN_t(:,t)   = max(PN_t(:,t),0);
     
-%     inh_static = PN.inhsc/(PN.inhadd + sum(ORN_t(:,t-1)));
-%     dPNRWdt    = -PN_RW(:,t-1)    + PN.spont + max(200*tanh((ORN_delta+PN.offset)*PN.tanhsc/200*inh_static),0);
-%     PN_RW(:,t) = PN_RW(:,t-1) + dPNRWdt*dt/PN.taum;
-%     
+    inh_static = PN.inhsc/(PN.inhadd + sum(ORN_t(:,t-1)));
+    dPNRWdt    = -PN_RW(:,t-1)    + PN.spont + max(200*tanh((ORN_delta+PN.offset)*PN.tanhsc/200*inh_static),0);
+    PN_RW(:,t) = PN_RW(:,t-1) + dPNRWdt*dt/PN.taum;
+    
 %     inhKO      = PN.inhsc/(PN.inhadd+sum(ORN.spont));
 %     dPNinhKOdt = -PN_inhKO(:,t-1) + PN.spont + max(200*tanh((ORN_delta+PN.offset)*PN.tanhsc/200*inhKO),0);
 %     PN_inhKO(:,t) = PN_inhKO(:,t-1) + dPNinhKOdt*dt/PN.taum;
@@ -56,13 +56,13 @@ nonHC = setdiff(1:51,ORN.HCList);
 if(sum(ORN.spont(nonHC))==0) %a cheap hack to indirectly test the value of realonly
     for i=1:length(nonHC)
         PN_t(nonHC(i),:)=0; %get rid of cells we aren't simulating- background effects of inh could muck up future analysis
-%         PN_RW(nonHC(i),:)=0;
+        PN_RW(nonHC(i),:)=0;
 %         PN_inhKO(nonHC(i),:)=0;
     end
 end
 
-% cut out the first 1.5 seconds of simtime (used to get the model to steady-state spontaneous conditions)
-ORN_t = ORN_t(:,1.5/dt+1:end);
-PN_t = PN_t(:,1.5/dt+1:end);
-% PN_RW = PN_RW(:,1.5/dt+1:end);
-% PN_inhKO = PN_inhKO(:,1.5/dt+1:end);
+% cut out the first second of simtime (used to get the model to steady-state spontaneous conditions)
+ORN_t = ORN_t(:,1/dt+1:end);
+PN_t = PN_t(:,1/dt+1:end);
+PN_RW = PN_RW(:,1/dt+1:end);
+% PN_inhKO = PN_inhKO(:,1/dt+1:end);
