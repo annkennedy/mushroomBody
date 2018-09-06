@@ -18,7 +18,7 @@ ORN         = buildORN(ORN, realonly);
 % [ORN,pairs] = addmixtures(ORN, mixlist, ratios);
 % -------------------------------------------------------------------------
 
-nOdor = 110;%size(ORN.rates,2);
+nOdor = size(ORN.rates,2);
 odorlist = 1:nOdor;
 
 LN={};  %lateral neurons (inhbition between glomeruli)
@@ -31,7 +31,7 @@ spRan = 0.1;%0.05:0.05:0.2;
 %         KCmeanStore_none = {};
 %     end
     for sp = 1:length(spRan)
-        for rep = 1
+        for rep = 1:5
             %set up PN and KC models
             [PN, KC] = initialize_cells(ORN,realonly);
             % uniform wPNKC
@@ -59,13 +59,13 @@ spRan = 0.1;%0.05:0.05:0.2;
             end
 %             PN_t = PN_RW;
 %             if(use)
-%                 KC = setKCthreshold_bycell(PN,PN_sample, odorset, KC,sp_target*2);
-%                 KC = fitSparseness(PN,PN_sample,odorset,KC,sp_target);
+                KC = setKCthreshold_bycell(PN,PN_sample, odorset, KC,sp_target*2);
+                KC = fitSparseness(PN,PN_sample,odorset,KC,sp_target);
 %             else
-                KC.wInhKC = zeros(KC.ncells,1);
-                KC.wKCInh = zeros(1,KC.ncells);
+%                 KC.wInhKC = zeros(KC.ncells,1);
+%                 KC.wKCInh = zeros(1,KC.ncells);
 %                 KC = scalePNKCwts(PN, PN_sample, odorset, KC);
-                KC = setKCthreshold(PN,PN_sample,odorset,KC,sp_target);
+%                 KC = setKCthreshold(PN,PN_sample,odorset,KC,sp_target);
 %             end
             disp('APL inhibition fit');
 
@@ -92,7 +92,7 @@ spRan = 0.1;%0.05:0.05:0.2;
                     disp([num2str(odorid) '. ' ORN.odornames{odorid} ': ' num2str(fr_active(odorid)*100) '%']);
                 end
             end
-            KCmeanStore_scalePNwts_noinh{sp,rep} = KCmean_st;
+            KCmeanStore_fineThr_withinh{sp,rep} = KCmean_st;
 %             if(use)
 %                 KCmeanStore_inh{sp,rep} = KCmean_st;
 %             else
@@ -108,59 +108,95 @@ spRan = 0.1;%0.05:0.05:0.2;
 % s=svd(KCmean_st);
 % dimensionality = sum(s)^2/sum(s.^2)
 
-%% effects on similarity with inh
+%% effects on similarity, with inh
 
+toplot=0;
 figure(1);clf;hold on;
 i=2;
 silentBars = [];
 silentCellBars = [];
 
 for use = {KCmeanStore_inh}
-    vals = [];
+    vals=[]; coactive=[];
     for rep = 1:3
-        M = use{1}{i,rep}(:,1:110);
-        vals = [vals pdist(M,'hamming')];
+        M   = use{1}{i,rep}(:,1:110);
+        Mand    = double(M~=0)'*double(M~=0);
+        Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+        overlap = Mand./Mor + tril(nan(size(Mand)));
+        overlap = overlap(~isnan(overlap))';
+        vals        = [vals pdist(M','hamming')];
+        coactive    = [coactive overlap];
     end
     silentBars(end+1) = sum(sum(M~=0)==0);
     silentCellBars(end+1) = sum(sum(M'~=0)==0);
-    h=plotCDFFit(vals);
+    if(toplot)
+        h=plotCDFFit(vals);
+    else
+        h=plotCDFFit(coactive);
+    end
 end
 set(h,'linewidth',2,'color','r');
 
 % normalize ORN responses
 M = KCmeanStore_normORNs{1,1};
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
 silentBars(end+1) = sum(sum(M~=0)==0);
 silentCellBars(end+1) = sum(sum(M'~=0)==0);
-vals = pdist(M,'hamming');
-plotCDFFit(vals);
+vals = pdist(M','hamming');
+if(toplot), plotCDFFit(vals);
+else, plotCDFFit(overlap); end
 
 % shuffle ORN responses
 M = KCmeanStore_randORNs{1,1};
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
 silentBars(end+1) = sum(sum(M~=0)==0);
 silentCellBars(end+1) = sum(sum(M'~=0)==0);
-vals = pdist(M,'hamming');
-plotCDFFit(vals);
+vals = pdist(M','hamming');
+if(toplot), plotCDFFit(vals);
+else, plotCDFFit(overlap); end
 
 % static PN model
 M = KCmeanStore_RW_PNs{1,1};
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
 silentBars(end+1) = sum(sum(M~=0)==0);
 silentCellBars(end+1) = sum(sum(M'~=0)==0);
-vals = pdist(M,'hamming');
-plotCDFFit(vals);
+vals = pdist(M','hamming');
+if(toplot), plotCDFFit(vals);
+else, plotCDFFit(overlap); end
 
 % uniform MB innervation by PNs
 M = KCmeanStore_uniform_wPNKC{1,1};
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
 silentBars(end+1) = sum(sum(M~=0)==0);
 silentCellBars(end+1) = sum(sum(M'~=0)==0);
-vals = pdist(M,'hamming');
-plotCDFFit(vals);
+vals = pdist(M','hamming');
+if(toplot), plotCDFFit(vals);
+else, plotCDFFit(overlap); end
 
-% finer-tuned KC thresholds, no inh
+% finer-tuned KC thresholds
 M = KCmeanStore_fineThr{1,1};
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
 silentBars(end+1) = sum(sum(M~=0)==0);
 silentCellBars(end+1) = sum(sum(M'~=0)==0);
-vals = pdist(M,'hamming');
-plotCDFFit(vals);
+vals = pdist(M','hamming');
+if(toplot), h=plotCDFFit(vals);
+else, h=plotCDFFit(overlap); end
+set(h,'linewidth',2);
 
 % 10% of cells for each odor
 for i=1:110
@@ -168,30 +204,36 @@ for i=1:110
     s = sort(vals);
     M(:,i) = vals>s(round(2000*.9));
 end
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
 silentBars(end+1) = sum(sum(M~=0)==0);
 silentCellBars(end+1) = sum(sum(M'~=0)==0);
-vals = sort(pdist(M,'hamming'));
-h = plotCDFFit(vals);
+vals = sort(pdist(M','hamming'));
+if(toplot), h=plotCDFFit(vals);
+else, h=plotCDFFit(overlap); end
 set(h,'linewidth',2,'color','k');
 
-
-legend('simple thr','norm ORNs','rand ORNs','static PN model','uniform wPNKC',...
+legstr = {'simple thr','norm ORNs','rand ORNs','static PN model','uniform wPNKC',...
         'fine-tuned KC thresholds',...
-        'rand KCs','location','best');
-xlabel('normalized hamming distance');
+        'rand KCs'};
+legend(legstr{:},'location','best');
+xlabel('fraction of overlap neurons');
+% xlabel('normalized hamming distance');
 ylabel('fraction of odor pairs');
 xlim([0 .5]);
+set(gca,'xscale','log')
 
+%%
 figure(2);clf;
 bar(silentBars);
-set(gca,'xtick',1:7,'xticklabels',{'simple thr','norm ORNs','rand ORNs',...
-    'static PN model','uniform wPNKC','fine-tuned KC thresholds'},'xticklabelrotation',30);
+set(gca,'xtick',1:7,'xticklabels',legstr,'xticklabelrotation',30);
 box off;
 
-figure(4);clf;
+figure(3);clf;
 bar(silentCellBars);
-set(gca,'xtick',1:7,'xticklabels',{'simple thr','norm ORNs','rand ORNs',...
-    'static PN model','uniform wPNKC','fine-tuned KC thresholds'},'xticklabelrotation',30);
+set(gca,'xtick',1:7,'xticklabels',legstr,'xticklabelrotation',30);
 box off;
 
 %% effects on similarity, no inh
@@ -202,59 +244,96 @@ silentBars = [];
 silentCellBars = [];
 
 for use = {KCmeanStore_none}
-    vals = [];
-    for rep = 1:3
-        M = use{1}{i,rep}(:,1:110);
-        vals = [vals pdist(M,'hamming')];
+    vals=[]; coactive=[];
+    for rep = 1%:3
+        M   = use{1}{i,rep}(:,1:110);
+        Mand    = double(M~=0)'*double(M~=0);
+        Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+        overlap = Mand./Mor + tril(nan(size(Mand)));
+        overlap = overlap(~isnan(overlap))';
+        vals        = [vals pdist(M','hamming')];
+        coactive    = [coactive overlap];
     end
     silentBars(end+1) = sum(sum(M~=0)==0);
     silentCellBars(end+1) = sum(sum(M'~=0)==0);
     h=plotCDFFit(vals);
+%     h=plotCDFFit(coactive);
 end
 set(h,'linewidth',2,'color','r');
 
 % normalize ORN responses
 M = KCmeanStore_normORNs_noinh{1,1};
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
 silentBars(end+1) = sum(sum(M~=0)==0);
 silentCellBars(end+1) = sum(sum(M'~=0)==0);
-vals = pdist(M,'hamming');
+vals = pdist(M','hamming');
 plotCDFFit(vals);
+% plotCDFFit(overlap);
 
 % shuffle ORN responses
 M = KCmeanStore_randORNs_noinh{1,1};
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
 silentBars(end+1) = sum(sum(M~=0)==0);
 silentCellBars(end+1) = sum(sum(M'~=0)==0);
-vals = pdist(M,'hamming');
+vals = pdist(M','hamming');
 plotCDFFit(vals);
+% plotCDFFit(overlap);
 
 % static PN model
 M = KCmeanStore_RW_PNs_noinh{1,1};
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
 silentBars(end+1) = sum(sum(M~=0)==0);
 silentCellBars(end+1) = sum(sum(M'~=0)==0);
-vals = pdist(M,'hamming');
+vals = pdist(M','hamming');
 plotCDFFit(vals);
+% plotCDFFit(overlap);
 
 % uniform MB innervation by PNs
 M = KCmeanStore_uniform_wPNKC_noinh{1,1};
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
 silentBars(end+1) = sum(sum(M~=0)==0);
 silentCellBars(end+1) = sum(sum(M'~=0)==0);
-vals = pdist(M,'hamming');
+vals = pdist(M','hamming');
 plotCDFFit(vals);
+% plotCDFFit(overlap);
 
 % finer-tuned KC thresholds, no inh
 M = KCmeanStore_fineThr_noinh{1,1};
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
 silentBars(end+1) = sum(sum(M~=0)==0);
 silentCellBars(end+1) = sum(sum(M'~=0)==0);
-vals = pdist(M,'hamming');
+vals = pdist(M','hamming');
 plotCDFFit(vals);
+% h=plotCDFFit(overlap);
+set(h,'linewidth',2);
 
 % scale PN weights "presynaptically"
 M = KCmeanStore_scalePNwts_noinh{1,1};
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
 silentBars(end+1) = sum(sum(M~=0)==0);
 silentCellBars(end+1) = sum(sum(M'~=0)==0);
-vals = pdist(M,'hamming');
+vals = pdist(M','hamming');
 h=plotCDFFit(vals);
-set(h,'linewidth',2);
+% plotCDFFit(overlap);
+
 
 % 10% of cells for each odor
 for i=1:110
@@ -262,10 +341,15 @@ for i=1:110
     s = sort(vals);
     M(:,i) = vals>s(round(2000*.9));
 end
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
 silentBars(end+1) = sum(sum(M~=0)==0);
 silentCellBars(end+1) = sum(sum(M'~=0)==0);
-vals = sort(pdist(M,'hamming'));
+vals = sort(pdist(M','hamming'));
 h = plotCDFFit(vals);
+% h=plotCDFFit(overlap);
 set(h,'linewidth',2,'color','k');
 
 legstr = {'simple thr','norm ORNs','rand ORNs','static PN model','uniform wPNKC',...
@@ -273,8 +357,10 @@ legstr = {'simple thr','norm ORNs','rand ORNs','static PN model','uniform wPNKC'
         'rand KCs'};
 legend(legstr{:},'location','best');
 xlabel('normalized hamming distance');
+% xlabel('fraction of coactive neurons');
 ylabel('fraction of odor pairs');
 xlim([0 .5]);
+% set(gca,'xscale','log')
 
 figure(2);clf;
 bar(silentBars);
@@ -286,31 +372,48 @@ bar(silentCellBars);
 set(gca,'xtick',1:7,'xticklabels',legstr,'xticklabelrotation',30);
 box off;
 
-%% effects on similarity- looking at tuning KC thresholds
+%% effects on similarity- looking at tuning KC thresholds with diff numbers of training examples
 
 figure(1);clf;hold on;
 i=2;
+doplot=0;
 
 for use = {KCmeanStore_none}
-    vals = [];
+    vals = [];coactive=[];
     for rep = 1:3
         M = use{1}{i,rep}(:,1:110);
-        vals = [vals pdist(M,'hamming')];
+        Mand    = double(M~=0)'*double(M~=0);
+        Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+        overlap = Mand./Mor + tril(nan(size(Mand)));
+        overlap = overlap(~isnan(overlap))';
+        vals = [vals pdist(M','hamming')];
+        coactive = [coactive overlap];
     end
-    h=plotCDFFit(vals);
+    if(doplot), h=plotCDFFit(vals);
+    else, h=plotCDFFit(coactive); end
     set(h,'linewidth',2,'color','r');
 end
 
 % finer-tuned KC thresholds, no inh
 M = KCmeanStore_fineThr_noinh{1,1};
-vals = pdist(M,'hamming');
-plotCDFFit(vals);
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
+vals = pdist(M','hamming');
+if(doplot), h=plotCDFFit(vals);
+else, h=plotCDFFit(overlap); end
 
 % finer-tuned KC thresholds, no inh
 for rep=1:10
-M = KCmeanStore_fineThr_noinh_sample60{1,rep};
-vals = pdist(M,'hamming');
-plotCDFFit(vals);
+M = KCmeanStore_fineThr_withinh_sample60{1,rep};
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
+vals = pdist(M','hamming');
+if(doplot), h=plotCDFFit(vals);
+else, h=plotCDFFit(overlap); end
 drawnow;
 end
 
@@ -320,16 +423,24 @@ for i=1:110
     s = sort(vals);
     M(:,i) = vals>s(round(2000*.9));
 end
-vals = sort(pdist(M,'hamming'));
-h=plotCDFFit(vals);
+Mand    = double(M~=0)'*double(M~=0);
+Mor     = sum(M~=0)'+sum(M~=0) - Mand;
+overlap = Mand./Mor + tril(nan(size(Mand)));
+overlap = overlap(~isnan(overlap))';
+vals = pdist(M','hamming');
+if(doplot), h=plotCDFFit(vals);
+else, h=plotCDFFit(overlap); end
 set(h,'linewidth',2,'color','k');
 
 % legend('no inh','with inh',...
 %         'fine-tuned KC thresholds, no inh','same, fewer thr examples',...
 %         'rand KCs','location','best');
-xlabel('normalized hamming distance');
+xlabel('fraction of coactive neurons');
 ylabel('fraction of odor pairs');
 xlim([0 .5]);
+set(gca,'xscale','log')
+
+
 %% number of missed odors
 figure(2);clf;hold on;
 for rep=1:10
@@ -358,7 +469,66 @@ set(gca,'xtick',1:3,'xticklabel',{'5','20','60'});
 
 %%
 [public, private] = find_public_and_private_odors(ORN);
-M = KCmeanStore_fineThr_noinh{1,1};
+M = KCmeanStore_fineThr_withinh{1,1};
 figure(2);clf;
-bar(sum(M(:,[public; private])~=0))
+bar([1:10 15:24],sum(M(:,[public; private])~=0))
+%%
+C1 = zeros(110);
+C2 = zeros(110);
+for rep = 1:5
+    M1 = KCmeanStore_fineThr_withinh{1,2}(:,1:110);
+    M2 = KCmeanStore_inh{1,2}(:,1:110);
+    C1 = C1 + corr(M1)/5;
+    C2 = C2 + corr(M2)/5;
+end
 
+figure(10);clf;
+plot(corr(M1),corr(M2),'.')
+xlabel('fine thr');ylabel('easy thr')
+hold on;
+plot([0 1],[0 1],'r')
+
+figure(11);
+subplot(2,3,1);
+image(corr(ORN.rates(:,1:110))*32+32);
+subplot(2,3,2);
+image(corr(PN.rates(:,1:110))*32+32);
+subplot(2,3,4);
+image(C1*32+32);colorbar
+subplot(2,3,5);
+image(C2*32+32);colorbar
+subplot(2,3,6)
+imagesc((C1-C2)./(abs(C1) + abs(C2)));colorbar
+
+%%
+figure(2);clf;colors=[1 0 0;0 0 1];count=0;
+for use = {KCmeanStore_inh KCmeanStore_fineThr_withinh}
+    count=count+1;
+    bins1 = 0:100:1200;
+    nOdor = 20;
+    bins2 = 0:nOdor-5;
+    n1 = zeros(size(bins1));
+    n2 = zeros(size(bins2));
+    for sRep = 1:5
+        nCells = [];nActive=[];
+        for rep = 1:5
+            sampleOdors = randperm(110,nOdor);
+            sampleCells = randperm(2000,10);
+            M = use{:}{1,rep};
+            nCells = [nCells sum(M(sampleCells,sampleOdors)~=0)];
+            nActive = [nActive sum(M(sampleCells,sampleOdors)'~=0)];
+        end
+        n1 = [n1; hist(nCells,bins1)];
+        n2 = [n2; hist(nActive,bins2)];
+    end
+%     subplot(2,1,1);hold on;
+%     area(bins1,n1/sum(n1));
+%     title('fraction of KCs active, across odors');
+%     subplot(2,1,2);
+    hold on;
+    h(count) = bar(bins2-.33+count/3,mean(n2)/sum(mean(n2)),.33);
+    errorbar(bins2-.33+count/3,mean(n2)/sum(mean(n2)),std(n2)/sum(mean(n2)),'k.');
+    title(['fraction of odors per cell, n = ' num2str(nOdor) ' odors'])
+    xlabel('number of odors a cell responds to');
+end
+legend(h,'simple','fancy');
