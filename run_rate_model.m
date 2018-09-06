@@ -489,34 +489,39 @@ hold on;
 plot([0 1],[0 1],'r')
 
 figure(11);
-subplot(2,3,1);
-image(corr(ORN.rates(:,1:110))*32+32);
+subplot(2,3,1)
+image(corr(ORN.rates(:,1:110))*32+32);colorbar;
+title('ORNs');
 subplot(2,3,2);
-image(corr(PN.rates(:,1:110))*32+32);
+image(corr(PN.rates(:,1:110))*32+32);colorbar
+title('PNs');
 subplot(2,3,4);
 image(C1*32+32);colorbar
+title('KC fancy');
 subplot(2,3,5);
 image(C2*32+32);colorbar
+title('KC simple');
 subplot(2,3,6)
 imagesc((C1-C2)./(abs(C1) + abs(C2)));colorbar
+title('diff fancy vs simple');
 
 %%
 figure(2);clf;colors=[1 0 0;0 0 1];count=0;
 for use = {KCmeanStore_inh KCmeanStore_fineThr_withinh}
     count=count+1;
     bins1 = 0:100:1200;
-    nOdor = 20;
-    bins2 = 0:nOdor-5;
+    nOdor = 25;
+    bins2 = 0:.1:1;
     n1 = zeros(size(bins1));
     n2 = zeros(size(bins2));
-    for sRep = 1:5
+    for sRep = 1:50
         nCells = [];nActive=[];
         for rep = 1:5
-            sampleOdors = randperm(110,nOdor);
+            sampleOdors = randperm(30,nOdor)+40;
             sampleCells = randperm(2000,10);
             M = use{:}{1,rep};
-            nCells = [nCells sum(M(sampleCells,sampleOdors)~=0)];
-            nActive = [nActive sum(M(sampleCells,sampleOdors)'~=0)];
+            nCells = [nCells mean(M(sampleCells,sampleOdors)~=0)];
+            nActive = [nActive mean(M(sampleCells,sampleOdors)'~=0)];
         end
         n1 = [n1; hist(nCells,bins1)];
         n2 = [n2; hist(nActive,bins2)];
@@ -526,9 +531,43 @@ for use = {KCmeanStore_inh KCmeanStore_fineThr_withinh}
 %     title('fraction of KCs active, across odors');
 %     subplot(2,1,2);
     hold on;
-    h(count) = bar(bins2-.33+count/3,mean(n2)/sum(mean(n2)),.33);
-    errorbar(bins2-.33+count/3,mean(n2)/sum(mean(n2)),std(n2)/sum(mean(n2)),'k.');
+    h(count) = bar(bins2*10-.33+count/3,mean(n2)/sum(mean(n2)),.33);
+    errorbar(bins2*10-.33+count/3,mean(n2)/sum(mean(n2)),std(n2)/sum(mean(n2)),'k.');
     title(['fraction of odors per cell, n = ' num2str(nOdor) ' odors'])
     xlabel('number of odors a cell responds to');
 end
 legend(h,'simple','fancy');
+
+%%
+colors = hsv(10);
+figure(1);clf;
+for i = 1:10
+    inds = find(ORN.odorclass==i);
+    M1 = KCmeanStore_inh{1,1}(:,inds);
+    M1b = KCmeanStore_fineThr_withinh{1,1}(:,inds);
+    M2 = ORN.rates(:,inds);
+
+    subplot(1,3,1);hold on;
+    plot(corr(M2),corr(double(M1~=0)),'.','color',colors(i,:));
+    xlim([-.5 1]);
+    ylim([-.5 1]);
+    plot([-.5 1],[-.5 1],'k');
+    plot([-.5 1],[0 0],'k');
+    title('original model');
+    subplot(1,3,2);hold on;
+    plot(corr(M2),corr(double(M1b~=0)),'k.','color',colors(i,:));
+    xlim([-.5 1]);
+    ylim([-.5 1]);
+    plot([-.5 1],[-.5 1],'k');
+    plot([-.5 1],[0 0],'k');
+    title('homeostatic model');
+    xlabel('ORN corr');
+    ylabel('KC corr');
+    subplot(1,3,3);hold on;
+    plot(corr(double(M1~=0)),corr(double(M1b~=0)),'.','color',colors(i,:));
+    xlabel('original');
+    ylabel('homeostatic');
+    xlim([-.5 1]);
+    ylim([-.5 1]);
+    plot([-.5 1],[-.5 1],'k');
+end
