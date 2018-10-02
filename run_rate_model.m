@@ -13,13 +13,15 @@ ORN         = buildORN(ORN, realonly);
 
 % new code to add mixtures of odors ---------------------------------------
 % mixinds     = randperm(110,20);                  %select odors to make mixtures of
-% ratios      = 0.1:0.1:0.9;                       %set mixing ratios
-% mixlist     = ORN.odornames(mixinds);
-% [ORN,pairs] = addmixtures(ORN, mixlist, ratios);
-% -------------------------------------------------------------------------
+[public, private] = find_public_and_private_odors(ORN,3);
+mixinds = [public;private];
+ratios      = 0.2:0.2:0.8;                       %set mixing ratios
+mixlist     = ORN.odornames(mixinds);
+ORN = addmixtures(ORN, mixlist, ratios);
+%% -------------------------------------------------------------------------
 
 nOdor = size(ORN.rates,2);
-odorlist = 1:nOdor;
+odorlist = [public' private' 187:nOdor];
 
 LN={};  %lateral neurons (inhbition between glomeruli)
 LN          = buildLN(LN);
@@ -59,7 +61,7 @@ spRan = 0.1;%0.05:0.05:0.2;
             end
 %             PN_t = PN_RW;
 %             if(use)
-                KC = setKCthreshold_bycell(PN,PN_sample, odorset, KC,sp_target*2);
+                KC = setKCthreshold(PN,PN_sample, odorset, KC,sp_target*2);
                 KC = fitSparseness(PN,PN_sample,odorset,KC,sp_target);
 %             else
 %                 KC.wInhKC = zeros(KC.ncells,1);
@@ -92,7 +94,7 @@ spRan = 0.1;%0.05:0.05:0.2;
                     disp([num2str(odorid) '. ' ORN.odornames{odorid} ': ' num2str(fr_active(odorid)*100) '%']);
                 end
             end
-            KCmeanStore_fineThr_withinh{sp,rep} = KCmean_st;
+            KCmeanStore_inh{sp,rep} = KCmean_st;
 %             if(use)
 %                 KCmeanStore_inh{sp,rep} = KCmean_st;
 %             else
@@ -571,3 +573,94 @@ for i = 1:10
     ylim([-.5 1]);
     plot([-.5 1],[-.5 1],'k');
 end
+%% looking at mixtures in both models!
+mixStarts = 187:4:nOdor;
+mixPairs = [public(1) public(2); ...
+            public(1) public(3); ...
+            public(2) public(3); ...
+            ...
+            private(1) public(1); ...
+            private(1) public(2); ...
+            private(1) public(3); ...
+            ...
+            private(2) public(1); ...
+            private(2) public(2); ...
+            private(2) public(3); ...
+            private(2) private(1); ...
+            private(2) private(3); ...
+            ...
+            private(3) public(1); ...
+            private(3) public(2); ...
+            private(3) public(3); ...
+            private(3) private(1)];
+pubpub = [1 2 3];
+privpriv = [10 11 15];
+pubpriv = setdiff(1:15,[pubpub privpriv]);
+%%
+            
+use = KCmeanStore_inh{1,1};
+clear M generalization;
+for mix = 1%:length(mixStarts)
+    C = zeros(5);
+    for i=1:5
+        if(i==1)
+            M(:,i) = use(:,mixPairs(mix,1))~=0;
+        elseif(i==5)
+            M(:,i) = use(:,mixPairs(mix,2))~=0;
+        else
+            M(:,i) = use(:,mixStarts(mix)+i-1)~=0;
+        end
+    end
+
+    C = corr(M);
+    Cstore{mix}=C;
+    for d = -4:4
+       generalization(mix,d+5) = nanmean(diag(C,d));
+    end
+    
+    clear M;
+    for i=1:5
+        if(i==1)
+            M(:,i) = use(:,mixPairs(mix,1));
+        elseif(i==5)
+            M(:,i) = use(:,mixPairs(mix,2));
+        else
+            M(:,i) = use(:,mixStarts(mix)+i-1);
+        end
+    end
+    explained(mix) = corr((M(:,1)+M(:,5))/2,M(:,3));
+end
+
+%%
+figure(1);clf;hold on;
+drawvar(-4:4,generalization(pubpub,:),'r',1);
+drawvar(-4:4,generalization(privpriv,:),'b',1);
+drawvar(-4:4,generalization(pubpriv,:),'g',1);
+
+figure(2);clf;
+subplot(1,3,1);
+M = zeros(size(C));
+for i = pubpub
+    M = M + Cstore{i}/length(pubpub);
+end
+image(M*32+32)
+subplot(1,3,2);
+M = zeros(size(C));
+for i = privpriv
+    M = M + Cstore{i}/length(privpriv);
+end
+image(M*32+32)
+subplot(1,3,3);
+M = zeros(size(C));
+for i = pubpriv
+    M = M + Cstore{i}/length(pubpriv);
+end
+image(M*32+32);
+
+
+
+
+
+
+
+

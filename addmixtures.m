@@ -33,5 +33,5 @@ for i=1:size(pairs,1)
 end
 
 ORN.rates = [ORN.rates newodors'];
-ORN.odornames = [ORN.odornames newnames];
+ORN.odornames = [ORN.odornames' newnames]';
 ORN.odorclass = [ORN.odorclass 13*ones(1,length(newnames))]; %add a 13th odor class for mixtures

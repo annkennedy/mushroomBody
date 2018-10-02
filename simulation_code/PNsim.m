@@ -15,7 +15,7 @@ for i = 1:nodors
     end
     inh = PN.inhsc/(b + PN.inhadd);
     
-    PN.rates(:,i)   = PN.Rmax * tanh((ORN.rates(:,i)+PN.offset)*PN.tanhsc*inh/PN.Rmax) + PN.spont; %the new PN model
+    PN.rates(:,i)   = PN.Rmax_dyn * tanh((ORN.rates(:,i)+PN.offset)*PN.tanhsc*inh/PN.Rmax_dyn) + PN.spont; %the new PN model
     PN.rates(:,i)   = max(PN.rates(:,i),0);
 
 %adding in the old model to test stuff

@@ -27,5 +27,5 @@ end
     
     %now add the average overtop:
     hold on;
-    h2=plot(X,nanmean(Y,1),['.-' color],'linewidth',1)
+    h2=plot(X,nanmean(Y,1),['.-' color],'linewidth',1);
 %     plot(X,nanmean(Y,1)/max(abs(nanmean(Y,1))),color,'linewidth',2)
