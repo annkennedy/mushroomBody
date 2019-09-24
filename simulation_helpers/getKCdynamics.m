@@ -1,4 +1,4 @@
-function [KC_s KC_t inh] = getKCratedynamics(PN,KC)
+function [KC_s KC_t inh] = getKCdynamics(PN,KC)
 
 dt      = KC.dt;
 time    = KC.tmin+dt:dt:KC.tmax;
@@ -18,7 +18,7 @@ for t = 2:length(time)
     dinhdt  = -inh(t-1) + Is(t-1);
     dKCdt   = -Vm(:,t-1) + w'*PN(:,t) - (KC.wInhKC*inh(t-1));
 
-    Vm(:,t) = Vm(:,t-1) + dKCdt*dt/KC.taum;
+    Vm(:,t) = Vm(:,t-1) + dKCdt*dt/KC.tau_m;
     inh(t)  = inh(t-1) + dinhdt*dt/tau_inh;
     Is(t)   = Is(t-1) + dIsdt*dt/tau_Is;
 

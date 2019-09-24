@@ -39,16 +39,16 @@ for t = 2:length(time)
     LN_t(t)     = LN_t(t-1) + dLNdt*dt/LN.taum;
     LNR(t)      = (LN_t(t) - LN.thr)*(LN_t(t)>LN.thr);
     ORN_t(:,t)  = ORN_t(:,t-1) + dORNdt*dt/ORN.taum;
-    PN_t(:,t)   = PN_t(:,t-1) + dPNdt*dt/PN.taum;
+    PN_t(:,t)   = PN_t(:,t-1) + dPNdt*dt/PN.tau_m;
     PN_t(:,t)   = max(PN_t(:,t),0);
     
     inh_static = PN.inhsc/(PN.inhadd + sum(ORN_t(:,t-1)));
     dPNRWdt    = -PN_RW(:,t-1)    + PN.spont + max(200*tanh((ORN_delta+PN.offset)*PN.tanhsc/200*inh_static),0);
-    PN_RW(:,t) = PN_RW(:,t-1) + dPNRWdt*dt/PN.taum;
+    PN_RW(:,t) = PN_RW(:,t-1) + dPNRWdt*dt/PN.tau_m;
     
 %     inhKO      = PN.inhsc/(PN.inhadd+sum(ORN.spont));
 %     dPNinhKOdt = -PN_inhKO(:,t-1) + PN.spont + max(200*tanh((ORN_delta+PN.offset)*PN.tanhsc/200*inhKO),0);
-%     PN_inhKO(:,t) = PN_inhKO(:,t-1) + dPNinhKOdt*dt/PN.taum;
+%     PN_inhKO(:,t) = PN_inhKO(:,t-1) + dPNinhKOdt*dt/PN.tau_m;
 
 end
 

@@ -9,7 +9,7 @@ for odorid = odorset
     count = count+1;
     PN_stim = kron(PN_t{odorid},ones(PN.PN_per_glom,1));
 
-    [KC_rasters,KC_t,~] = getKCratedynamics(PN_stim,KC);
+    [KC_rasters,KC_t,~] = getKCdynamics(PN_stim,KC);
     KCpks(:,count) = max(KC_t')' - KC.spont*2;
 end
 

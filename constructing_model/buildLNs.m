@@ -1,4 +1,4 @@
-function LN = buildLN(LN)
+function LN = buildLNs(LN)
 
 % time constants (GA/GB fit to RI Wilson, G Laurent (2005) J Neuro)
 LN.taum   = 0.01;

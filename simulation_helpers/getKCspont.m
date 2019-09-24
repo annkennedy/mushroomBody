@@ -11,7 +11,7 @@ for rep = 1:nreps
     PN_s = smoothts([zeros(size(PN{1},1),1) PN{rep}],'e',KC.tau_s/dt);
     for t = 2:length(time)
         dKCdt       = -Vm(:,t-1) + w'*PN_s(:,t);
-        Vm(:,t)   = Vm(:,t-1) + dKCdt*dt/KC.taum;
+        Vm(:,t)   = Vm(:,t-1) + dKCdt*dt/KC.tau_m;
     end
     Vm_mean = Vm_mean + Vm/nreps;
 end

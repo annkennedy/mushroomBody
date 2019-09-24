@@ -1,6 +1,6 @@
 realonly = 1;
 ORN = {}; %olfactory receptor neurons
-ORN         = buildORN(ORN, realonly);
+ORN         = buildORNs(ORN, realonly);
 LN={};  %lateral neurons (inhbition between glomeruli)
 LN          = buildLN(LN);
 [PN, KC] = initialize_cells(ORN,realonly);

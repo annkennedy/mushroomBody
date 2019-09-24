@@ -13,7 +13,7 @@ if(sp_target<1)
         for odorid = odorset
             PN_stim = kron(PN_t{odorid},ones(PN.PN_per_glom,1));
 
-            [KC_rasters,~,~] = getKCratedynamics(PN_stim,KC);
+            [KC_rasters,~,~] = getKCdynamics(PN_stim,KC);
 
             KCmean = sum(KC_rasters,2);
             fr_active(odorid) = length(nonzeros(KCmean>0))/KC.ncells;
@@ -22,7 +22,6 @@ if(sp_target<1)
         end
 
         sp = mean(mean(KCmean_st(:,odorset)>0));
-        [sp sp-sp_target]
         KC.wInhKC = KC.wInhKC + (sp-sp_target)*10/sp_target/sqrt(count);
         KC.wKCInh = KC.wKCInh + (sp-sp_target)*10/sp_target/KC.ncells/sqrt(count);
     end
