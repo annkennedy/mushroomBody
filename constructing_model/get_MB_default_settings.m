@@ -32,3 +32,6 @@ opts.nreps       = 1;
 
 % show progress during simulation
 opts.verbose     = 1;
+
+% blank cell for saving results
+opts.results = {};

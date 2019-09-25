@@ -1,5 +1,9 @@
 function ORN = buildORNs(ORN, opts, varargin)
 
+if(~exist('opts','var'))
+	opts = get_MB_default_settings();
+end
+
 ORN.HCList  = [7, 17, 46, 12, 8, 20, 5, 39, 6, 45, 21, 29, 33, 22, 15, 24, 40, 34, 23, 48, 16, 28, 49]; %the glomeruli H&C record from
 
 olfDataM;
