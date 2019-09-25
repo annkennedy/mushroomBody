@@ -1,5 +1,6 @@
 # mushroomBody
 Code for simulating and analyzing a dynamic model of the mushroom body, including olfactory receptor neurons (ORNs), projection neurons (PNs), GABAergic local neurons (LNs) of the antennal lobe, Kenyon cells (KCs) and the GABAergic anterior paired lateral neuron (APL).
+
 ![](docs/MB_diagram.png)
 
 This repository is still under construction.
