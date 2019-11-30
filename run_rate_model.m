@@ -67,7 +67,8 @@ function [KC_spikes,fr_active,odorspercell] = run_rate_model(odorlist, opts)
 			end
 			PN_t = kron(PN_t,ones(PN.PN_per_glom,1));
 		else
-			PN_t = getPNspikes(PN,PN_t,ntrials);
+			PN_t = getPNspikes(PN,PN_t,1);
+            PN_t = PN_t{1};
 		end
 
         [KC_rasters,~,~] = getKCdynamics(PN_t,KC);

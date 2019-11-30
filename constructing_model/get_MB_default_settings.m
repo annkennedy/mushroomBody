@@ -8,6 +8,9 @@ opts.realonly    = 1;
 % whether to include APL inhibition
 opts.useAPL      = 1;
 
+% whether to simulate PNs as firing rates or generate spikes
+opts.useFiringRateModel = 1;
+
 % whether to include homeostatic threshold tuning
 opts.homeostatic = 0;
 
