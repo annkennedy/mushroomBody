@@ -28,7 +28,5 @@ This repository contains code to reproduce all model variations presented in the
 - `util` are plotting/data-searching helper functions
 
 ## Usage
-If you use or modify this model, please cite the accompanying paper:
+If you use or modify this model, please cite the [accompanying paper](https://www.biorxiv.org/content/10.1101/783191v1.abstract):
 > Kennedy, A. (2019). Learning with naturalistic odor representations in a dynamic model of the Drosophila olfactory system. bioRxiv.
-
-([link](https://www.biorxiv.org/content/10.1101/783191v1.abstract))
