@@ -3,7 +3,7 @@ Code for simulating and analyzing a dynamic model of the mushroom body, includin
 
 <div align=center><img src='docs/MB_diagram.png'></div>
 
-This repository is still under construction.
+For more information about the model, please see the accompanying [bioRxiv paper](https://www.biorxiv.org/content/10.1101/783191v1.abstract).
 
 ## Quick demo
 This model simulates Kenyon cell responses to each of 110 odors from the [Hallem & Carlson ORN odor response dataset](https://www.sciencedirect.com/science/article/pii/S0092867406003631).
@@ -26,3 +26,8 @@ This repository contains code to reproduce all model variations presented in the
 - `learning` contains scripts to experiment with learning and odor generalization by either a Perceptron or a biological learning rule.
 - `simulation_helpers` are scripts called in the process of simulating Projection neuron and Kenyon cell dynamics.
 - `util` are plotting/data-searching helper functions
+
+## Usage
+If you use or modify this model, please cite the accompanying paper:
+> Kennedy, A. (2019). Learning with naturalistic odor representations in a dynamic model of the Drosophila olfactory system. bioRxiv.
+([link](https://www.biorxiv.org/content/10.1101/783191v1.abstract))
